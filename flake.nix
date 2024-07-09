@@ -17,6 +17,44 @@
 
   outputs = { self, nixpkgs, raspberry-pi-nix }: rec {
     # shoutout to https://github.com/tstat/raspberry-pi-nix absolute goat
+    shared_config = {
+      #target architecture
+      nixpkgs.hostPlatform.system = "aarch64-linux";
+
+      #NTP
+      services.timesyncd.enable = true;
+
+      # Disable signatures
+      nix.settings.require-sigs = false;
+
+      # user setup; creates user named nixos and sets up passwords
+      users.users.root.initialPassword = "root";
+      users.users.nixos.group = "nixos";
+      users.users.nixos.password = "nixos";
+      users.users.nixos.extraGroups = [ "wheel" ];
+      users.users.nixos.isNormalUser = true;
+
+      system.activationScripts.createRecordingsDir = nixpkgs.lib.stringAFter ["users"] ''
+      mkdir -p /home/nixos/recordings
+      chown nixos:users /home/nixos/recordings
+      '';
+
+      # Network settings
+      networking.hostName = "Philipp";
+
+      networking.firewall.enable = false;
+      networking.useDHCP = false;
+
+      # SSH settings
+      services.openssh = { enable = true; };
+
+      users.extraUsers.nixos.openssh.authorizedKeys.keys = [ ];
+
+      systemd.services.sshd.wantedBy =
+        nixpkgs.lib.mkOverride 40 [ "multi-user.target" ];
+
+    };
+
     nixosConfigurations.rpi = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
       modules = [
@@ -45,7 +83,7 @@
         raspberry-pi-nix.nixosModules.raspberry-pi
 
         # Running the configs made earlier
-        # shared_config
+        shared_config
       ];
     };
 
