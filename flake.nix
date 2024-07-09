@@ -35,8 +35,8 @@
       users.users.nixos.isNormalUser = true;
 
       system.activationScripts.createRecordingsDir = nixpkgs.lib.stringAFter ["users"] ''
-      mkdir -p /home/nixos/recordings
-      chown nixos:users /home/nixos/recordings
+      mkdir -p /home/nixos/raw_logs
+      chown nixos:users /home/nixos/raw_logs
       '';
 
       # Network settings
@@ -63,18 +63,24 @@
             config = {
               # Utils and other apps you want
               environment.systemPackages = with pkgs; [
-                can-utils
-                iperf3
+                rsync
+                sshpass
               ];
 
               # Settings for the image that is generated
               sdImage.compressImage = false;
               raspberry-pi-nix.uboot.enable = false;
-            };
 
-            # Start the logging service
-            options = {
-              services.data_writer.options.enable = true;
+              systemd.services.start-rsync = {
+                description = "Init the rsync command on a directory";
+                wantedBy = [ "multi-user.target" ];
+                after = [ "network-setup.service" ];
+                serviceConfig = {
+                  Type = "oneshot";
+                  ExecStart = "${pkgs.sshpass}/bin/sshpass -p nixos ${pkgs.rsync}/bin/rsync  -r nixos@192.168.1.7:/home/nixos/recordings/ /home/nixos/raw_logs/";
+                  RemainAfterExit = true;
+                };
+              };
             };
           }
         )
