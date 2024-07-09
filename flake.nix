@@ -40,7 +40,7 @@
       '';
 
       # Network settings
-      networking.hostName = "Philipp";
+      networking.hostName = "ElectricCar";
 
       networking.firewall.enable = false;
       networking.useDHCP = false;
