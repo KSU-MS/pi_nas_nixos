@@ -1,5 +1,5 @@
 {
-  description = "A very basic flake";
+  description = "A flake to automate building for KSU's DAQ PAQ NAS";
 
   # Cache to reduce build times dont worry about it
   nixConfig = {
@@ -34,13 +34,14 @@
       users.users.nixos.extraGroups = [ "wheel" ];
       users.users.nixos.isNormalUser = true;
 
-      system.activationScripts.createRecordingsDir = nixpkgs.lib.stringAFter ["users"] ''
+      users.groups.nixos = {}; # Needed for the next bit idk
+      system.activationScripts.createRecordingsDir = nixpkgs.lib.stringAfter ["users"] ''
       mkdir -p /home/nixos/raw_logs
       chown nixos:users /home/nixos/raw_logs
       '';
 
       # Network settings
-      networking.hostName = "ElectricCar";
+      networking.hostName = "daq_paq";
 
       networking.firewall.enable = false;
       networking.useDHCP = false;
@@ -53,6 +54,17 @@
       systemd.services.sshd.wantedBy =
         nixpkgs.lib.mkOverride 40 [ "multi-user.target" ];
 
+    };
+
+    pi3_config = { pkgs, lib, ... }: {
+      # Even more networking config
+      networking = {
+        interfaces.enu1u1u1.ipv4.addresses = [{ # The pi3 has a diffrent name for some reason
+          address = "192.168.1.17"; # Your static IP address
+          prefixLength = 24; # Netmask, 24 for 255.255.255.0
+        }];
+        defaultGateway = "192.168.1.1";
+      };
     };
 
     nixosConfigurations.rpi = nixpkgs.lib.nixosSystem {
@@ -90,6 +102,7 @@
 
         # Running the configs made earlier
         shared_config
+        pi3_config
       ];
     };
 
