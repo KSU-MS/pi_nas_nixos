@@ -11,7 +11,7 @@
 
   # All the outside things to fetch from the internet
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
     raspberry-pi-nix.url = "github:tstat/raspberry-pi-nix";
   };
 
